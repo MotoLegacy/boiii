@@ -1,0 +1,38 @@
+#using scripts\codescripts\struct;
+
+#using scripts\shared\clientfield_shared;
+#using scripts\shared\system_shared;
+#using scripts\shared\flag_shared;
+#using scripts\shared\util_shared;
+
+#insert scripts\shared\shared.gsh;
+#insert scripts\shared\version.gsh;
+
+function autoexec main()
+{
+    level thread check_for_super_ee_support();
+}
+
+function check_for_super_ee_support()
+{
+    // Wait until we can be more confident a usermap script has had time to
+    // set our Super EE field, AKA at the end of mapname.gsc.
+    level flag::wait_till( "zones_initialized" );
+
+    // Mod creators can use this field to opt-into the Super EE start weapon.
+	if ( !isDefined( level.modSupportsSuperEERewards ) )
+		level.modSupportsSuperEERewards = false;
+
+    // No rewards if a mod is loaded and mod creator has not permitted RK5 start.
+	if ( getDvarString( "fs_game" ) != "" && level.modSupportsSuperEERewards == false )
+        disallow_super_ee_rewards = true;
+
+    for ( ;; )
+    {
+        level waittill( "connecting", player );
+
+        // Force-set the completion stat to false if prohibited.
+        if ( isDefined( disallow_super_ee_rewards ) )
+            player.hasCompletedSuperEE = false;
+    }
+}
